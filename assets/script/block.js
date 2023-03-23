@@ -1,4 +1,5 @@
-import colors from  'colors';
+import colors from './colors';
+
 cc.Class({
     extends: cc.Component,
 
@@ -18,6 +19,7 @@ cc.Class({
         if (number == 0) {
             this.numberLabel.node.action = false;
             this.numberLabel.string = "";
+            this.node.opacity = 89; // 设置透明度
         } else {
             this.numberLabel.string = number;
         }

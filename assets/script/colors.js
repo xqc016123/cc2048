@@ -1,6 +1,6 @@
 let colors = [];
 
-colors[0] = cc.color(238, 228, 218, 0.35);
+colors[0] = new cc.Color().fromHEX("#eee4da");
 colors[2] = new cc.Color().fromHEX("#eee4da");
 colors[4] = new cc.Color().fromHEX("#ede0c8");
 colors[8] = new cc.Color().fromHEX("#f2b179");
