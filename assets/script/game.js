@@ -106,7 +106,7 @@ cc.Class({
     addRandomBlock(animation) {
         let loc = this.getRandomAvailableBlock();
         if (loc != null) {
-            let number = 819210;// this.getRandomNumber();
+            let number = this.getRandomNumber();
             let block = this.drawBlock(loc.x, loc.y, number);
             if (animation) {
                 block.scale = 0.8;
