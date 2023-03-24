@@ -96,18 +96,25 @@ cc.Class({
             }
         }
 
-        this.addRandomBlock();
-        this.addRandomBlock();
+        this.addRandomBlock(false);
+        this.addRandomBlock(false);
     },
 
     /**
      * 添加随机方格
      */
-    addRandomBlock() {
+    addRandomBlock(animation) {
         let loc = this.getRandomAvailableBlock();
         if (loc != null) {
-            let number = this.getRandomNumber();
-            this.blocks[loc.y][loc.x] = this.drawBlock(loc.x, loc.y, number);
+            let number = 819210;// this.getRandomNumber();
+            let block = this.drawBlock(loc.x, loc.y, number);
+            if (animation) {
+                block.scale = 0.8;
+                cc.tween(block)
+                    .to(constant.MERGE_DURATION, { scale: 1 })
+                    .start();
+            }
+            this.blocks[loc.y][loc.x] = block;
             this.data[loc.y][loc.x] = number;
         }
     },
@@ -196,43 +203,129 @@ cc.Class({
     },
 
     move(direction) {
+        if (this.moving != null && this.moving == true) {
+            return;
+        }
+
+        this.moving    = true;
         let vector     = this.getVector(direction);
         let traversals = this.getTraversals(vector);
-
-        let counter = 1;
+        this.mergedBlockLocations = [];
+        let moved                 = false;
         traversals.x.forEach(x => {
             traversals.y.forEach(y => {
                 let location = { x: x, y: y };
-
                 if (!this.locationAvailable(location)) { // 位置不可用代表这里有方格，可能需要移动
-                    cc.log(`进来${counter++}次`);
                     let movable = this.findFarthestLocation(location, vector);
-                    cc.log(`由${JSON.stringify(location)}移动到${JSON.stringify(movable.farthest)}`);
-                    let block = this.getBlockFrom(location);
-                    if (!this.locationEquals(location, movable.farthest)) {
-                        this.moveBlock(block, location, movable.farthest);
+                    let next    = movable.next;
+                    let block   = this.getBlock(location);
+
+                    // 判断是否需要合并
+                    if (this.withinBounds(next) && this.canMerge(location, next)) {
+                        this.mergeBlocks(block, location, movable.farthest, movable.next, vector);
+                        moved = true;
+                    } else {
+                        if (!this.locationEquals(location, movable.farthest)) {
+                            this.moveBlock(block, location, movable.farthest);
+                            moved = true;
+                        }
                     }
                 }
             });
         });
 
+        this.scheduleOnce(() => {
+            this.moving = false;
+            if (moved) {
+                this.afterMoved();
+            }
+        }, constant.MOVE_DURATION);
     },
 
-    moveBlock(block, location, farthest) {
-        this.blocks[farthest.y][farthest.x] = block;
+    moveBlock(block, location, farthest, callback) {
         this.blocks[location.y][location.x] = null;
-        this.data[farthest.y][farthest.x] = this.data[location.y][location.x];
+        this.blocks[farthest.y][farthest.x] = block;
+
+        let number = this.data[location.y][location.x];
         this.data[location.y][location.x] = 0;
+        this.data[farthest.y][farthest.x] = number;
 
         let position = this.getPosition(farthest);
         let action = cc.moveTo(constant.MOVE_DURATION, position);
         let finish = cc.callFunc(() => {
+            callback && callback();
         });
         block.runAction(cc.sequence(action, finish));
     },
 
-    getBlockFrom(location) {
+    mergeBlocks(block, location, farthest, next, vector) {
+        this.data[next.y][next.x]           *= 2;
+        this.data[location.y][location.x]    = 0;
+        this.blocks[location.y][location.x]  = null;
+        this.mergedBlockLocations.push(`${next.x}-${next.y}`);
+
+        let nextBlock = this.getBlock(next);
+        nextBlock.zIndex = 1;
+
+        // 执行合并步骤
+        let doMergeStep = () => {
+            let position = this.getPosition(next);
+            // 执行缩放动画
+            let scaleAction1 = cc.scaleTo(constant.MERGE_DURATION / 2, 1.1, 1.1);
+            let scaleAction2 = cc.scaleTo(constant.MERGE_DURATION / 2, 1, 1);
+            nextBlock.runAction(cc.sequence(scaleAction1, scaleAction2));
+            nextBlock.getComponent("block").setNumber(this.data[next.y][next.x]);
+
+            // 合并完成
+            let finish = cc.callFunc(() => {
+                this.board.removeChild(block);
+                nextBlock.zIndex = 0;
+            });
+            let move = cc.moveTo(constant.MERGE_DURATION, position);
+            block.runAction(cc.sequence(move, finish));
+        };
+
+        let moveBeforeMerge = this.shouldMoveBeforeMerge(farthest, next, vector);
+        if (moveBeforeMerge) {
+            this.moveBlock(block, location, farthest, doMergeStep);
+        } else {
+            doMergeStep();
+        }
+    },
+
+    /**
+     * 一次手势后的处理
+     */
+    afterMoved() {
+        cc.log(this.data);
+        cc.log(this.blocks);
+        this.addRandomBlock(true);
+    },
+
+    /**
+     * 是否需要在merge前执行move操作
+     */
+    shouldMoveBeforeMerge(farthest, next, vector) {
+        if (vector.x != 0) {
+            return Math.abs(next.x - farthest.x) > 1;
+        } else if (vector.y != 0) {
+            return Math.abs(next.x - farthest.x) > 1;
+        }
+    },
+
+    /**
+     * 更具当前坐标获取方格
+     */
+    getBlock(location) {
         return this.blocks[location.y][location.x];
+    },
+
+    /**
+     * 两个坐标位置的方格是否可以合并
+     */
+    canMerge(location, next) {
+        return this.data[location.y][location.x] == this.data[next.y][next.x] &&
+               this.mergedBlockLocations.indexOf(`${next.x}-${next.y}`) === -1;
     },
 
     /**
@@ -299,7 +392,7 @@ cc.Class({
      */
     locationAvailable(location) {
         if (this.withinBounds(location)) {
-            return this.getBlockFrom(location) == null;
+            return this.getBlock(location) == null;
         }
         return false;
     },

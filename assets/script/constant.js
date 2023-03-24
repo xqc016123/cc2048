@@ -8,6 +8,8 @@ module.exports = {
     DIRECTION_LEFT  : "left",
     DIRECTION_RIGHT : "right",
 
-    // 移动动画时长：0.1s
-    MOVE_DURATION : 0.2,
+    // 移动动画时长：0.2s
+    MOVE_DURATION  : 0.2,
+    // 合并动画时常： 0.08s
+    MERGE_DURATION : 0.1,
 }

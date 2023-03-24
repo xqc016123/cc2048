@@ -12,7 +12,10 @@ colors[256] = new cc.Color().fromHEX("#edcc61");
 colors[512] = new cc.Color().fromHEX("#edc850");
 colors[1024] = new cc.Color().fromHEX("#edc53f");
 colors[2048] = new cc.Color().fromHEX("#edc22e");
+
 colors["BOARD"] = new cc.Color().fromHEX("#bbada0");
 colors["SUPER"] = new cc.Color().fromHEX("#3c3a32");
+colors["TEXT_S"] = new cc.Color().fromHEX("#776e65");
+colors["TEXT_B"] = new cc.Color().fromHEX("#ffffff");
 
 module.exports = colors;
