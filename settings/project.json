@@ -1,3 +1,7 @@
 {
-  "start-scene": "8740f200-f4b9-4d75-b6e4-3a6883875742"
+  "start-scene": "8740f200-f4b9-4d75-b6e4-3a6883875742",
+  "group-list": [
+    "default"
+  ],
+  "last-module-event-record-time": 1679728363082
 }

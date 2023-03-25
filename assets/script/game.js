@@ -7,13 +7,16 @@ cc.Class({
     properties: {
         board: cc.Node, // 游戏面板
         blockPrefab: cc.Prefab,
-        gap: 0,
-        size: 4,
+        dashboard: cc.Node, // 顶部消息模块
+        startBtn: cc.Button, // 开始游戏按钮
+        logoLabel: cc.Label, // 2048标题
+        descripLabel: cc.RichText, // 描述文字
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     // onLoad () {},
+
 
     start () {
         this.setup();
@@ -26,14 +29,54 @@ cc.Class({
      * 设置一些初始化信息
      */
     setup() {
-        let width = cc.winSize.width;
+        let width  = cc.winSize.width;
         let height = cc.winSize.height;
         // 格子大小为屏幕宽度的20%
         this.blockSize = width * 0.2;
         // 间隔
-        this.gap = width * 0.02;
+        this.gap  = width * 0.02;
+        this.size = 4;
+        // 初始化数据面板
+        this.setupDashBoard(width, height);
         // 初始化棋盘容器
         this.setupBoardBackground(width, height);
+    },
+
+    /**
+     * 获取微信小程序顶部胶囊区域高度
+     */
+    getMenuButtonBoundingRect() {
+        if (cc.sys.platform == cc.sys.WECHAT_GAME) {
+            cc.log("微信小游戏哦");
+            let menuInfo = wx.getMenuButtonBoundingClientRect();
+            let systemInfo = wx.getSystemInfoSync();
+            return this.node.parent.height * (menuInfo.top / systemInfo.screenHeight);
+        } else {
+            cc.log("其他");
+            return 0;
+        }
+    },
+
+    /**
+     * 初始化数据面板
+     */
+    setupDashBoard(width, height) {
+        this.dashboard.width = width * 0.9;
+        this.dashboard.height = width * 0.35;
+        this.dashboard.color = colors["BACKGROUND"];
+        this.dashboard.setPosition(-0.45 * width, height / 2 - this.getMenuButtonBoundingRect(), 0);
+
+        this.startBtn.node.width = width * 0.26;
+        this.startBtn.node.height = this.startBtn.node.width / 2.8;
+        this.startBtn.node.setPosition(
+            this.dashboard.width - this.startBtn.node.width,
+            -(this.dashboard.height - this.startBtn.node.height) + 10, 0);
+
+        this.logoLabel.height = this.dashboard.height - this.startBtn.node.height;
+        this.logoLabel.lineHeight = this.logoLabel.height - 40;
+        this.logoLabel.node.setPosition(0, -(this.dashboard.height - this.logoLabel.height) / 2 + 10, 0);
+
+        this.descripLabel.node.setPosition(0, -this.logoLabel.height + 40, 0);
     },
 
     /**
@@ -43,7 +86,7 @@ cc.Class({
         this.board.width = width * 0.9;
         this.board.height = this.board.width;
         this.board.color = colors["BOARD"];
-        this.board.setPosition(-width * 0.45, this.board.width / 2, 0);
+        this.board.setPosition(-width * 0.45, height / 2 - this.dashboard.height - 10, 0);
     },
 
     /**
@@ -260,6 +303,7 @@ cc.Class({
 
     mergeBlocks(block, location, farthest, next, vector) {
         this.data[next.y][next.x]           *= 2;
+        this.score                          += Math.log2(this.data[next.y][next.x]);
         this.data[location.y][location.x]    = 0;
         this.blocks[location.y][location.x]  = null;
         this.mergedBlockLocations.push(`${next.x}-${next.y}`);
