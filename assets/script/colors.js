@@ -18,5 +18,6 @@ colors["BOARD"] = new cc.Color().fromHEX("#bbada0");
 colors["SUPER"] = new cc.Color().fromHEX("#3c3a32");
 colors["TEXT_S"] = new cc.Color().fromHEX("#776e65");
 colors["TEXT_B"] = new cc.Color().fromHEX("#ffffff");
+colors["ADD_SCORE"] = new cc.Color().fromHEX("#8F7A66");
 
 module.exports = colors;

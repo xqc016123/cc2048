@@ -865,7 +865,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 177.97,
-      "height": 100.8
+      "height": 100
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -919,7 +919,7 @@
     "_string": "2048",
     "_N$string": "2048",
     "_fontSize": 80,
-    "_lineHeight": 80,
+    "_lineHeight": 100,
     "_enableWrapText": false,
     "_N$file": null,
     "_isSystemFontUsed": true,
@@ -930,7 +930,7 @@
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 1,
+    "_N$overflow": 2,
     "_N$cacheMode": 0,
     "_id": "d2pZPw+eJG8L3V8fkjEANT"
   },
@@ -1006,7 +1006,7 @@
     "_enabled": true,
     "_fontFamily": "Arial",
     "_isSystemFontUsed": true,
-    "_N$string": "<color=#776e65>合并方格，得到</c>\n<color=#776e65;text-transform: uppercase;>2048！</color>",
+    "_N$string": "<color=#776e65;><size:20;>合并方格，得到</size></color>\n<color=#776e65;><b>2048!</b></color>",
     "_N$horizontalAlign": 0,
     "_N$fontSize": 30,
     "_N$font": null,
@@ -1145,11 +1145,17 @@
     "startBtn": {
       "__id__": 15
     },
+    "btnTitleLabel": {
+      "__id__": 12
+    },
     "logoLabel": {
       "__id__": 17
     },
     "descripLabel": {
       "__id__": 19
+    },
+    "scoreBoardPrefab": {
+      "__uuid__": "95d6140f-2d77-49d4-993e-992281aa3f29"
     },
     "_id": "4ctyUnoM1DH4b103NjxlBF"
   }

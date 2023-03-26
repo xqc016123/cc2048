@@ -9,19 +9,21 @@ cc.Class({
         blockPrefab: cc.Prefab,
         dashboard: cc.Node, // 顶部消息模块
         startBtn: cc.Button, // 开始游戏按钮
+        btnTitleLabel: cc.Label, // 开始按钮标题
         logoLabel: cc.Label, // 2048标题
         descripLabel: cc.RichText, // 描述文字
+        scoreBoardPrefab: cc.Prefab, // 得分面板
     },
 
     // LIFE-CYCLE CALLBACKS:
 
-    // onLoad () {},
-
+    onLoad () {
+        this.setup();
+        this.addTouchEventListener();
+    },
 
     start () {
-        this.setup();
         this.drawBoardGrid();
-        this.addTouchEventListener();
         this.initGame();
     },
 
@@ -34,8 +36,10 @@ cc.Class({
         // 格子大小为屏幕宽度的20%
         this.blockSize = width * 0.2;
         // 间隔
-        this.gap  = width * 0.02;
-        this.size = 4;
+        this.gap   = width * 0.02;
+        this.size  = 4;
+        this.score = 0;
+        this.best  = 0;
         // 初始化数据面板
         this.setupDashBoard(width, height);
         // 初始化棋盘容器
@@ -61,22 +65,51 @@ cc.Class({
      * 初始化数据面板
      */
     setupDashBoard(width, height) {
+        this.logoLabel.node.setPosition(0, -10, 0);
+
+        this.descripLabel.node.setPosition(0, -this.logoLabel.node.y - this.logoLabel.lineHeight - 12, 0);
+
+        this.startBtn.node.width = width * 0.26;
+        this.btnTitleLabel.string = constant.GAME_PAUSE;
+        this.startBtn.node.height = this.startBtn.node.width / 3;
+        this.startBtn.node.setPosition(
+            this.dashboard.width - this.startBtn.node.width,
+            this.descripLabel.node.y - this.descripLabel.node.height / 2 + this.startBtn.node.height / 2, 0);
+
         this.dashboard.width = width * 0.9;
-        this.dashboard.height = width * 0.35;
+        this.dashboard.height = Math.abs(this.descripLabel.node.y - this.descripLabel.node.height);
         this.dashboard.color = colors["BACKGROUND"];
         this.dashboard.setPosition(-0.45 * width, height / 2 - this.getMenuButtonBoundingRect(), 0);
 
-        this.startBtn.node.width = width * 0.26;
-        this.startBtn.node.height = this.startBtn.node.width / 2.8;
-        this.startBtn.node.setPosition(
-            this.dashboard.width - this.startBtn.node.width,
-            -(this.dashboard.height - this.startBtn.node.height) + 10, 0);
+        // 添加最高分
+        let bestScore = this.addScoreBoard(width);
+        bestScore.getComponent("scoreBoard").setTitle(constant.SCORE_BEST);
+        bestScore.setPosition(this.dashboard.width - bestScore.width / 2, - bestScore.height / 2, 0);
+        this.bestScore = bestScore;
+        this.updateBestScore(0);
 
-        this.logoLabel.height = this.dashboard.height - this.startBtn.node.height;
-        this.logoLabel.lineHeight = this.logoLabel.height - 40;
-        this.logoLabel.node.setPosition(0, -(this.dashboard.height - this.logoLabel.height) / 2 + 10, 0);
+        // 添加得分
+        let currentScore = this.addScoreBoard(width);
+        currentScore.getComponent("scoreBoard").setTitle(constant.SCORE_CUREENT);
+        currentScore.setPosition(this.dashboard.width - currentScore.width * 1.5 - 12, - bestScore.height / 2, 0);
+        this.curScore = currentScore;
+        this.updateCurrentScore(0, false);
+    },
 
-        this.descripLabel.node.setPosition(0, -this.logoLabel.height + 40, 0);
+    updateBestScore(score) {
+        this.bestScore.getComponent("scoreBoard").setScore(score, false);
+    },
+
+    updateCurrentScore(score, animation) {
+        this.curScore.getComponent("scoreBoard").setScore(score, animation);
+    },
+
+    addScoreBoard(width) {
+        let instance = cc.instantiate(this.scoreBoardPrefab);
+        instance.width =  width * 0.22;
+        instance.height = width * 0.11;
+        this.dashboard.addChild(instance)
+        return instance;
     },
 
     /**
@@ -86,7 +119,9 @@ cc.Class({
         this.board.width = width * 0.9;
         this.board.height = this.board.width;
         this.board.color = colors["BOARD"];
-        this.board.setPosition(-width * 0.45, height / 2 - this.dashboard.height - 10, 0);
+        this.board.setPosition(
+            -width * 0.45,
+            height / 2 - this.dashboard.height - 12, 0);
     },
 
     /**
@@ -304,6 +339,7 @@ cc.Class({
     mergeBlocks(block, location, farthest, next, vector) {
         this.data[next.y][next.x]           *= 2;
         this.score                          += Math.log2(this.data[next.y][next.x]);
+        this.best                            = Math.max(this.score, this.best);
         this.data[location.y][location.x]    = 0;
         this.blocks[location.y][location.x]  = null;
         this.mergedBlockLocations.push(`${next.x}-${next.y}`);
@@ -341,8 +377,8 @@ cc.Class({
      * 一次手势后的处理
      */
     afterMoved() {
-        cc.log(this.data);
-        cc.log(this.blocks);
+        this.updateBestScore(this.best);
+        this.updateCurrentScore(this.score, true);
         this.addRandomBlock(true);
     },
 
