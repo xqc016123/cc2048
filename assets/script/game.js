@@ -1,5 +1,6 @@
 import colors from  './colors';
 import constant from './constant';
+import storage from './storage';
 
 cc.Class({
     extends: cc.Component,
@@ -18,13 +19,23 @@ cc.Class({
     // LIFE-CYCLE CALLBACKS:
 
     onLoad () {
+        this.topSpacing = this.getMenuButtonBoundingRect();
         this.setup();
         this.addTouchEventListener();
     },
 
     start () {
         this.drawBoardGrid();
-        this.initGame();
+        let data = storage.getGameData();
+        if (data.board) {
+            this.score = data.score;
+            this.best  = data.best;
+            this.startGame(data.board);
+        } else {
+            this.score = 0;
+            this.best  = 0;
+            this.restartGame();
+        }
     },
 
     /**
@@ -38,8 +49,6 @@ cc.Class({
         // 间隔
         this.gap   = width * 0.02;
         this.size  = 4;
-        this.score = 0;
-        this.best  = 0;
         // 初始化数据面板
         this.setupDashBoard(width, height);
         // 初始化棋盘容器
@@ -51,12 +60,16 @@ cc.Class({
      */
     getMenuButtonBoundingRect() {
         if (cc.sys.platform == cc.sys.WECHAT_GAME) {
-            cc.log("微信小游戏哦");
-            let menuInfo = wx.getMenuButtonBoundingClientRect();
-            let systemInfo = wx.getSystemInfoSync();
-            return this.node.parent.height * (menuInfo.top / systemInfo.screenHeight);
+            const systemInfo = wx.getSystemInfoSync();
+            // 胶囊按钮位置信息
+            const menuButtonInfo = wx.getMenuButtonBoundingClientRect();
+            // 导航栏高度 = 状态栏到胶囊的间距（胶囊上坐标位置-状态栏高度） * 2 + 胶囊高度 + 状态栏高度
+            if (systemInfo.system.indexOf('iOS') > -1) {
+                return (menuButtonInfo.height + 12) * cc.winSize.height / systemInfo.screenHeight;
+            } else {
+                return (menuButtonInfo.height + 16) * cc.winSize.height / systemInfo.screenHeight;
+            }
         } else {
-            cc.log("其他");
             return 0;
         }
     },
@@ -67,19 +80,19 @@ cc.Class({
     setupDashBoard(width, height) {
         this.logoLabel.node.setPosition(0, -10, 0);
 
-        this.descripLabel.node.setPosition(0, -this.logoLabel.node.y - this.logoLabel.lineHeight - 12, 0);
+        this.descripLabel.node.setPosition(0, -this.logoLabel.node.y - this.logoLabel.lineHeight - 18, 0);
 
-        this.startBtn.node.width = width * 0.26;
+        this.startBtn.node.width = width * 0.24;
         this.btnTitleLabel.string = constant.GAME_PAUSE;
         this.startBtn.node.height = this.startBtn.node.width / 3;
         this.startBtn.node.setPosition(
-            this.dashboard.width - this.startBtn.node.width,
+            width * 0.9 - this.startBtn.node.width,
             this.descripLabel.node.y - this.descripLabel.node.height / 2 + this.startBtn.node.height / 2, 0);
 
         this.dashboard.width = width * 0.9;
-        this.dashboard.height = Math.abs(this.descripLabel.node.y - this.descripLabel.node.height);
+        this.dashboard.height = Math.abs(this.descripLabel.node.y - this.descripLabel.node.height + 6);
         this.dashboard.color = colors["BACKGROUND"];
-        this.dashboard.setPosition(-0.45 * width, height / 2 - this.getMenuButtonBoundingRect(), 0);
+        this.dashboard.setPosition(-0.45 * width, height / 2 - this.topSpacing, 0);
 
         // 添加最高分
         let bestScore = this.addScoreBoard(width);
@@ -121,7 +134,7 @@ cc.Class({
         this.board.color = colors["BOARD"];
         this.board.setPosition(
             -width * 0.45,
-            height / 2 - this.dashboard.height - 12, 0);
+            height / 2 - this.dashboard.height - this.topSpacing - 12, 0);
     },
 
     /**
@@ -160,9 +173,9 @@ cc.Class({
     },
 
     /**
-     * 初始化游戏，并根据情况添加数字方格
+     * 新游戏
      */
-    initGame() {
+    restartGame() {
         this.blocks = [];
         this.data = [];
         for (let y = 0; y < this.size; y++) {
@@ -176,6 +189,24 @@ cc.Class({
 
         this.addRandomBlock(false);
         this.addRandomBlock(false);
+    },
+
+    /**
+     * 根据缓存开始新游戏
+     */
+    startGame(board) {
+        this.data = board;
+        this.blocks = [];
+        for (let y = 0; y < this.size; y++) {
+            this.blocks[y] = [];
+            for (let x = 0; x < this.size; x++) {
+                if (this.data[y][x] !== 0) {
+                    this.blocks[y][x] = null;
+                } else {
+                    this.blocks[y][x] = this.addExistBlock(this.data[y][x], x, y);
+                }
+            }
+        }
     },
 
     /**
@@ -195,6 +226,13 @@ cc.Class({
             this.blocks[loc.y][loc.x] = block;
             this.data[loc.y][loc.x] = number;
         }
+    },
+
+    /**
+     * 添加已存在的方格
+     */
+    addExistBlock(number, x, y) {
+        return this.drawBlock(x, y, number);
     },
 
     /**
