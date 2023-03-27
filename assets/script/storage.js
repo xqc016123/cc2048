@@ -12,6 +12,18 @@ const setBestScore = function (score) {
     } catch (e) { }
 }
 
+const setIsGameOver = function (isGameOver) {
+    try {
+        wx.setStorageSync(constant.STORAGE_BEST_KEY, isGameOver);
+    } catch (e) { }
+}
+
+const setGameWon = function (gameWon) {
+    try {
+        wx.setStorageSync(constant.STORAGE_WON_KEY, gameWon);
+    } catch (e) { }
+}
+
 const setBoard = function (board) {
     try {
         wx.setStorageSync(constant.STORAGE_BOARD_KEY, board);
@@ -23,19 +35,18 @@ const  getGameData = function () {
         let score = wx.getStorageSync(constant.STORAGE_SCORE_KEY);
         let best = wx.getStorageSync(constant.STORAGE_BEST_KEY);
         let board = wx.getStorageSync(constant.STORAGE_BOARD_KEY);
+        let isGameOver = wx.getStorageSync(constant.STORAGE_OVER_KEY);
+        let won = wx.getStorageSync(constant.STORAGE_WON_KEY);
         return {
             score: score || 0,
             best: best || 0,
-            board: [
-                [0, 0, 0, 2],
-                [0, 4, 0, 0],
-                [0, 4, 4, 0],
-                [0, 4, 4, 2],
-            ],
+            board: board,
+            isGameOver: isGameOver || false,
+            won: won,
         }
     } catch (e) { }
 }
 
 module.exports = {
-    setScore, setBestScore, setBoard, getGameData,
+    setScore, setBestScore, setBoard, setIsGameOver, setGameWon, getGameData,
 }

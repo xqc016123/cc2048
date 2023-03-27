@@ -18,12 +18,14 @@ module.exports = {
     // 得分
     SCORE_CUREENT   : "得分",
 
-    GAME_PAUSE   : "暂停",
+    GAME_PAUSE   : "菜单",
     GAME_RESTART : "重新开始",
     GAME_RANK    : "排行榜",
     GAME_REWARD  : "观看广告，清除一格",
 
     STORAGE_SCORE_KEY  : "2048_game_score_storage",
     STORAGE_BEST_KEY   : "2048_game_best_storage",
-    STORAGE_BOARD_KEY   : "2048_game_board_storage",
+    STORAGE_BOARD_KEY  : "2048_game_board_storage",
+    STORAGE_OVER_KEY   : "2048_game_over_storage",
+    STORAGE_WON_KEY    : "2048_game_won_storage",
 }

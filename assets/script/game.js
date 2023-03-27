@@ -14,29 +14,32 @@ cc.Class({
         logoLabel: cc.Label, // 2048标题
         descripLabel: cc.RichText, // 描述文字
         scoreBoardPrefab: cc.Prefab, // 得分面板
+        isGameOver: false, // 游戏是否结束
+        won: false, // 是否已经成功过2048
     },
 
     // LIFE-CYCLE CALLBACKS:
 
     onLoad () {
-        this.topSpacing = this.getMenuButtonBoundingRect();
         this.setup();
         this.addTouchEventListener();
+        this.addOnGameBackground();
     },
 
     start () {
         this.drawBoardGrid();
 
         let data = storage.getGameData();
+        this.score = data.score;
+        this.best  = data.best;
+        this.isGameOver = data.isGameOver;
+        this.won = data.won;
         if (data.board) {
-            this.score = data.score;
-            this.best  = data.best;
             this.startGame(data.board);
         } else {
-            this.score = 0;
-            this.best  = 0;
             this.restartGame();
         }
+        this.updateStartBtnTitle();
     },
 
     /**
@@ -45,6 +48,7 @@ cc.Class({
     setup() {
         let width  = cc.winSize.width;
         let height = cc.winSize.height;
+        this.topSpacing = this.getMenuButtonBoundingRect();
         // 格子大小为屏幕宽度的20%
         this.blockSize = width * 0.2;
         // 间隔
@@ -118,6 +122,17 @@ cc.Class({
         this.curScore.getComponent("scoreBoard").setScore(score, animation);
     },
 
+    /**
+     * 更新开始游戏按钮的标题
+     */
+    updateStartBtnTitle() {
+        if (this.isGameOver) {
+            this.btnTitleLabel.string = constant.GAME_RESTART;
+        } else {
+            this.btnTitleLabel.string = constant.GAME_PAUSE;
+        }
+    },
+
     addScoreBoard(width) {
         let instance = cc.instantiate(this.scoreBoardPrefab);
         instance.width =  width * 0.22;
@@ -177,6 +192,10 @@ cc.Class({
      * 新游戏
      */
     restartGame() {
+        this.score = 0;
+        this.updateCurrentScore(this.score);
+        this.clearExistBlocks();
+
         this.blocks = [];
         this.data = [];
         for (let y = 0; y < this.size; y++) {
@@ -190,6 +209,19 @@ cc.Class({
 
         this.addRandomBlock(false);
         this.addRandomBlock(false);
+    },
+
+    /**
+     * 清除之前的内容
+     */
+    clearExistBlocks() {
+        this.blocks.forEach(rows => {
+            rows.forEach(block => {
+                if (block) {
+                    block.destroy();
+                }
+            });
+        });
     },
 
     /**
@@ -288,6 +320,24 @@ cc.Class({
         this.board.on("touchend", (event) => {
             this.touchEnd(event);
         });
+
+        // 开始游戏按钮点击事件
+        this.startBtn.on("click", () => {
+            this.onStartClick();
+        });
+    },
+
+    /**
+     * 点击右上角关闭按钮，游戏切换到后台
+     */
+    addOnGameBackground() {
+        cc.game.on(cc.game.EVENT_HIDE, () => {
+            storage.setScore(this.score);
+            storage.setBestScore(this.best);
+            storage.setBoard(this.board);
+            storage.setIsGameOver(this.isGameOver);
+            storage.setGameWon(this.won);
+        });
     },
 
     /**
@@ -295,7 +345,6 @@ cc.Class({
      */
     touchEnd(event) {
         let endPoint = event.getLocation();
-        
         let vec = endPoint.sub(this.startPoint);
         let direction = constant.DIRECTION_NONE;
         if (vec.mag() >= constant.MIN_TOCHE_MOVE_LENGTH) {
@@ -320,7 +369,7 @@ cc.Class({
     },
 
     move(direction) {
-        if (this.moving != null && this.moving == true) {
+        if (this.moving != null && this.moving == true && this.isGameOver) {
             return;
         }
 
@@ -383,6 +432,10 @@ cc.Class({
         this.blocks[location.y][location.x]  = null;
         this.mergedBlockLocations.push(`${next.x}-${next.y}`);
 
+        if (this.won === false) {
+            this.won = this.data[next.y][next.x] === 2048;
+        }
+
         let nextBlock = this.getBlock(next);
         nextBlock.zIndex = 1;
 
@@ -419,6 +472,39 @@ cc.Class({
         this.updateBestScore(this.best);
         this.updateCurrentScore(this.score, true);
         this.addRandomBlock(true);
+        this.isGameOver = this.checkGameOver();
+        if (this.isGameOver) {
+            this.updateStartBtnTitle();
+            this.showLoseBoard();
+        } else if (this.won) {
+            this.showWonBoard();
+        }
+    },
+
+    /**
+     * 检查游戏是否结束
+     */
+    checkGameOver() {
+        for (let y = 0; y < this.size; y++) {
+            for (let x = 0; x < this.size; x++) {
+                let number = this.board[i][j];
+                if (number === 0) {
+                    // 只要有空格，游戏就没结束
+                    return false;
+                }
+                for (const direction in [constant.DIRECTION_UP, constant.DIRECTION_RIGHT, constant.DIRECTION_LEFT, constant.DIRECTION_DOWN]) {
+                    let vector = this.getVector(direction);
+                    let location = { x: x + vector.x, y: y + vector.y };
+                    if (this.locationAvailable(location)) {
+                        if (number === this.data[location.y][location.x]) {
+                            // 四个方向上只有有相同的，游戏就没有结束
+                            return  false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     },
 
     /**
@@ -523,9 +609,44 @@ cc.Class({
         return first.x == second.x && first.y == second.y;
     },
 
+    /**
+     * 开始游戏按钮点击事件
+     */
+    onStartClick() {
+        if (this.isGameOver) {
+            this.restartGame();
+        } else {
+            this.showMenuBoard();
+        }
+    },
+
+    /**
+     * 弹出菜单面板
+     */
+    showMenuBoard() {
+    },
+
+    /**
+     * 弹出2048面板
+     */
+    showWonBoard() {
+
+    },
+
+    /**
+     * 弹出失败面板
+     */
+    showLoseBoard() {
+    },
 
 
 
+    /**
+     * 随机清除一格
+     */
+    clearRandomBlock() {
+
+    },
 
     // update (dt) {},
 });
