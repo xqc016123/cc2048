@@ -16,6 +16,9 @@ cc.Class({
         scoreBoardPrefab: cc.Prefab, // 得分面板
         isGameOver: false, // 游戏是否结束
         won: false, // 是否已经成功过2048
+
+        gameOverlay: cc.Node, // 游戏失败弹窗
+        gameOverlayContent: cc.Node, // 游戏失败弹窗内容容器
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -34,6 +37,7 @@ cc.Class({
         this.best  = data.best;
         this.isGameOver = data.isGameOver;
         this.won = data.won;
+        console.log(data);
         if (data.board) {
             this.startGame(data.board);
         } else {
@@ -322,7 +326,7 @@ cc.Class({
         });
 
         // 开始游戏按钮点击事件
-        this.startBtn.on("click", () => {
+        this.startBtn.node.on("click", () => {
             this.onStartClick();
         });
     },
@@ -624,13 +628,13 @@ cc.Class({
      * 弹出菜单面板
      */
     showMenuBoard() {
+        this.gameOverlay.node.active = true;
     },
 
     /**
      * 弹出2048面板
      */
     showWonBoard() {
-
     },
 
     /**
