@@ -26,6 +26,7 @@ cc.Class({
 
     start () {
         this.drawBoardGrid();
+
         let data = storage.getGameData();
         if (data.board) {
             this.score = data.score;
@@ -200,7 +201,7 @@ cc.Class({
         for (let y = 0; y < this.size; y++) {
             this.blocks[y] = [];
             for (let x = 0; x < this.size; x++) {
-                if (this.data[y][x] !== 0) {
+                if (this.data[y][x] === 0) {
                     this.blocks[y][x] = null;
                 } else {
                     this.blocks[y][x] = this.addExistBlock(this.data[y][x], x, y);
