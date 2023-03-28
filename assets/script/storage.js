@@ -35,6 +35,9 @@ const  getGameData = function () {
         let score = wx.getStorageSync(constant.STORAGE_SCORE_KEY);
         let best = wx.getStorageSync(constant.STORAGE_BEST_KEY);
         let board = wx.getStorageSync(constant.STORAGE_BOARD_KEY);
+        if (board === "") {
+            board = null;
+        }
         let isGameOver = wx.getStorageSync(constant.STORAGE_OVER_KEY);
         let won = wx.getStorageSync(constant.STORAGE_WON_KEY);
         return {
@@ -42,7 +45,7 @@ const  getGameData = function () {
             best: best || 0,
             board: board,
             isGameOver: isGameOver || false,
-            won: won,
+            won: won || false,
         }
     } catch (e) { }
 }

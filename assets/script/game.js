@@ -17,8 +17,16 @@ cc.Class({
         isGameOver: false, // 游戏是否结束
         won: false, // 是否已经成功过2048
 
-        gameOverlay: cc.Node, // 游戏失败弹窗
-        gameOverlayContent: cc.Node, // 游戏失败弹窗内容容器
+        overlay: cc.Node, // 游戏失败弹窗
+        // 游戏失败弹窗内容容器
+        gameOver: cc.Node,
+        gameOverClose: cc.Button,
+        gameOverRestart: cc.Button,
+        // 游戏成功弹窗内容容器
+        gameWon: cc.Node,
+        gameWonClose: cc.Button,
+        gameWonRestart: cc.Button,
+        gameWonContinue: cc.Button,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -37,8 +45,8 @@ cc.Class({
         this.best  = data.best;
         this.isGameOver = data.isGameOver;
         this.won = data.won;
-        console.log(data);
-        if (data.board) {
+
+        if (data.board !== null) {
             this.startGame(data.board);
         } else {
             this.restartGame();
@@ -196,6 +204,7 @@ cc.Class({
      * 新游戏
      */
     restartGame() {
+        this.isGameOver = false;
         this.score = 0;
         this.updateCurrentScore(this.score);
         this.clearExistBlocks();
@@ -219,19 +228,25 @@ cc.Class({
      * 清除之前的内容
      */
     clearExistBlocks() {
-        this.blocks.forEach(rows => {
-            rows.forEach(block => {
-                if (block) {
-                    block.destroy();
+        if (Array.isArray(this.blocks)) {
+            this.blocks.forEach(rows => {
+                if (Array.isArray(rows)) {
+                    rows.forEach(block => {
+                        if (block) {
+                            block.destroy();
+                        }
+                    });
                 }
             });
-        });
+        }
     },
 
     /**
      * 根据缓存开始新游戏
      */
     startGame(board) {
+        this.score = 0;
+
         this.data = board;
         this.blocks = [];
         for (let y = 0; y < this.size; y++) {
@@ -328,6 +343,25 @@ cc.Class({
         // 开始游戏按钮点击事件
         this.startBtn.node.on("click", () => {
             this.onStartClick();
+        });
+
+        // 关闭
+        this.gameOverClose.node.on("click", () => {
+           this.onCloseTapped(this.gameOver);
+        });
+        this.gameWonClose.node.on("click", () => {
+            this.onCloseTapped(this.gameWon);
+        });
+        this.gameWonContinue.node.on("click", () => {
+            this.onCloseTapped(this.gameWon);
+        });
+
+        // 重新开始
+        this.gameOverRestart.node.on("click", () => {
+            this.onRestartTapped(this.gameOver);
+        });
+        this.gameWonRestart.node.on("click", () => {
+            this.onRestartTapped(this.gameWon);
         });
     },
 
@@ -491,7 +525,7 @@ cc.Class({
     checkGameOver() {
         for (let y = 0; y < this.size; y++) {
             for (let x = 0; x < this.size; x++) {
-                let number = this.board[i][j];
+                let number = this.board[y][x];
                 if (number === 0) {
                     // 只要有空格，游戏就没结束
                     return false;
@@ -617,24 +651,28 @@ cc.Class({
      * 开始游戏按钮点击事件
      */
     onStartClick() {
+        console.log(this.isGameOver);
         if (this.isGameOver) {
             this.restartGame();
         } else {
-            this.showMenuBoard();
+            // this.showMenuBoard();
+            this.showWonBoard();
         }
+
     },
 
     /**
      * 弹出菜单面板
      */
     showMenuBoard() {
-        this.gameOverlay.node.active = true;
+        this.popupBoardAnimation(this.overlay, this.gameOver);
     },
 
     /**
      * 弹出2048面板
      */
     showWonBoard() {
+        this.popupBoardAnimation(this.overlay, this.gameWon);
     },
 
     /**
@@ -643,6 +681,38 @@ cc.Class({
     showLoseBoard() {
     },
 
+    popupBoardAnimation(overlay, content) {
+        overlay.active = true;
+        content.active = true;
+        let opAction = cc.fadeTo(constant.MERGE_DURATION, 140);
+        let scaleAction = cc.scaleTo(constant.MERGE_DURATION, 1);
+        let copAction = cc.fadeTo(constant.MERGE_DURATION, 255);
+        overlay.runAction(opAction);
+        content.runAction(cc.spawn(copAction, scaleAction));
+    },
+
+    dismissPopBoardAnimation(overlay, content, callback) {
+        let opAction = cc.fadeTo(constant.MERGE_DURATION, 0);
+        let scaleAction = cc.scaleTo(constant.MERGE_DURATION, 0.5);
+        let copAction = cc.fadeTo(constant.MERGE_DURATION, 0);
+        let finish = cc.callFunc(() => {
+            overlay.active = false;
+            content.active = false;
+            callback && callback();
+        });
+        overlay.runAction(cc.sequence(opAction, finish));
+        content.runAction(cc.spawn(scaleAction, copAction));
+    },
+
+    onCloseTapped(content) {
+        this.dismissPopBoardAnimation(this.overlay, content);
+    },
+
+    onRestartTapped(content) {
+        this.dismissPopBoardAnimation(this.overlay, content, () => {
+            this.restartGame();
+        });
+    },
 
 
     /**
