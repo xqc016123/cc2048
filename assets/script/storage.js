@@ -30,6 +30,18 @@ const setBoard = function (board) {
     } catch (e) { }
 }
 
+const setSize = function (size) {
+    try {
+        wx.setStorageSync(constant.STORAGE_SIZE_KEY, size);
+    } catch (e) { }
+}
+
+const  setVoice = function (isOpen) {
+    try {
+        wx.setStorageSync(constant.STORAGE_VOICE_KEY, isOpen);
+    } catch (e) { }
+}
+
 const  getGameData = function () {
     try {
         let score = wx.getStorageSync(constant.STORAGE_SCORE_KEY);
@@ -40,16 +52,20 @@ const  getGameData = function () {
         }
         let isGameOver = wx.getStorageSync(constant.STORAGE_OVER_KEY);
         let won = wx.getStorageSync(constant.STORAGE_WON_KEY);
+        let size = wx.getStorageSync(constant.STORAGE_SIZE_KEY);
+        let voice = wx.getStorageSync(constant.STORAGE_VOICE_KEY);
         return {
             score: score || 0,
             best: best || 0,
             board: board,
             isGameOver: isGameOver || false,
             won: won || false,
+            size: size || 4,
+            voice: voice || true,
         }
     } catch (e) { }
 }
 
 module.exports = {
-    setScore, setBestScore, setBoard, setIsGameOver, setGameWon, getGameData,
+    setScore, setBestScore, setBoard, setIsGameOver, setGameWon, setSize, setVoice, getGameData,
 }

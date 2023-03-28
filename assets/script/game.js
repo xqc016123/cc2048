@@ -14,19 +14,26 @@ cc.Class({
         logoLabel: cc.Label, // 2048标题
         descripLabel: cc.RichText, // 描述文字
         scoreBoardPrefab: cc.Prefab, // 得分面板
-        isGameOver: false, // 游戏是否结束
-        won: false, // 是否已经成功过2048
 
         overlay: cc.Node, // 游戏失败弹窗
         // 游戏失败弹窗内容容器
         gameOver: cc.Node,
         gameOverClose: cc.Button,
         gameOverRestart: cc.Button,
+        gameOverClear: cc.Button,
         // 游戏成功弹窗内容容器
         gameWon: cc.Node,
         gameWonClose: cc.Button,
         gameWonRestart: cc.Button,
         gameWonContinue: cc.Button,
+        // 游戏菜单弹窗内容容器
+        gameMenu: cc.Node,
+        gameMenuClose: cc.Button,
+        gameMenuNew: cc.Button,
+        gameMenuVoice: cc.Button,
+        gameMenuMode: cc.Button,
+        gameMenuModeLabel: cc.Label,
+        gameMenuVoiceLabel: cc.Label,
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -39,37 +46,36 @@ cc.Class({
 
     start () {
         this.drawBoardGrid();
+        this.updateStartBtnTitle();
 
-        let data = storage.getGameData();
-        this.score = data.score;
-        this.best  = data.best;
-        this.isGameOver = data.isGameOver;
-        this.won = data.won;
+        let width  = cc.winSize.width;
+        let height = cc.winSize.height;
+        this.setupDashBoard(width, height);
+        this.setupBoardBackground(width, height);
 
-        if (data.board !== null) {
-            this.startGame(data.board);
+        if (this.board !== null) {
+            this.startGame(this.board);
         } else {
             this.restartGame();
         }
-        this.updateStartBtnTitle();
     },
 
     /**
      * 设置一些初始化信息
      */
     setup() {
-        let width  = cc.winSize.width;
-        let height = cc.winSize.height;
-        this.topSpacing = this.getMenuButtonBoundingRect();
-        // 格子大小为屏幕宽度的20%
-        this.blockSize = width * 0.2;
-        // 间隔
-        this.gap   = width * 0.02;
-        this.size  = 4;
-        // 初始化数据面板
-        this.setupDashBoard(width, height);
-        // 初始化棋盘容器
-        this.setupBoardBackground(width, height);
+        let width           = cc.winSize.width;
+        this.topSpacing     = this.getMenuButtonBoundingRect();
+        this.blockSize      = width * 0.2;
+        this.gap            = width * 0.02;
+        let data            = storage.getGameData();
+        this.score          = data.score;
+        this.best           = data.best;
+        this.isGameOver     = data.isGameOver;
+        this.won            = data.won;
+        this.voiceOn        = data.voice;
+        this.size           = data.size;
+        this.board          = data.board;
     },
 
     /**
@@ -355,6 +361,9 @@ cc.Class({
         this.gameWonContinue.node.on("click", () => {
             this.onCloseTapped(this.gameWon);
         });
+        this.gameMenuClose.node.on("click", () => {
+            this.onCloseTapped(this.gameMenu);
+        });
 
         // 重新开始
         this.gameOverRestart.node.on("click", () => {
@@ -362,6 +371,19 @@ cc.Class({
         });
         this.gameWonRestart.node.on("click", () => {
             this.onRestartTapped(this.gameWon);
+        });
+        this.gameMenuNew.node.on("click", () => {
+            this.onRestartTapped(this.gameMenu);
+        });
+
+        // 音效
+        this.gameMenuVoice.node.on("click", () => {
+           this.onVoiceTapped(this.gameMenu);
+        });
+
+        // 模式
+        this.gameMenuMode.node.on("click", () => {
+            this.onModeTapped(this.gameMenu);
         });
     },
 
@@ -655,17 +677,19 @@ cc.Class({
         if (this.isGameOver) {
             this.restartGame();
         } else {
-            // this.showMenuBoard();
-            this.showWonBoard();
+            this.showMenuBoard();
+            // this.showWonBoard();
+            // this.showLoseBoard();
         }
-
     },
 
     /**
      * 弹出菜单面板
      */
     showMenuBoard() {
-        this.popupBoardAnimation(this.overlay, this.gameOver);
+        this.gameMenuModeLabel.string = this.size === 4 ? constant.MODE_NORMAL : constant.MODE_HARD;
+        this.gameMenuVoiceLabel.string = this.voiceOn ? constant.VOICE_OFF : constant.VOICE_ON;
+        this.popupBoardAnimation(this.overlay, this.gameMenu);
     },
 
     /**
@@ -679,6 +703,7 @@ cc.Class({
      * 弹出失败面板
      */
     showLoseBoard() {
+        this.popupBoardAnimation(this.overlay, this.gameOver);
     },
 
     popupBoardAnimation(overlay, content) {
@@ -714,6 +739,22 @@ cc.Class({
         });
     },
 
+    onVoiceTapped(content) {
+        this.voiceOn = !this.voiceOn;
+        storage.setVoice(this.voiceOn);
+        // 关闭音乐
+        this.dismissPopBoardAnimation(this.overlay, content, () => {
+            this.restartGame();
+        });
+    },
+
+    onModeTapped(content) {
+        this.size = this.size === 4 ? 5 : 4;
+        storage.setSize(this.size);
+        this.dismissPopBoardAnimation(this.overlay, content, () => {
+            this.restartGame();
+        });
+    },
 
     /**
      * 随机清除一格

@@ -28,4 +28,12 @@ module.exports = {
     STORAGE_BOARD_KEY  : "2048_game_board_storage",
     STORAGE_OVER_KEY   : "2048_game_over_storage",
     STORAGE_WON_KEY    : "2048_game_won_storage",
+    STORAGE_SIZE_KEY   : "2048_game_size_storage",
+    STORAGE_VOICE_KEY  : "2048_game_voice_storage",
+
+    MODE_NORMAL : "经典(4X4)",
+    MODE_HARD   : "进阶(5X5)",
+
+    VOICE_ON   : "音效(开)",
+    VOICE_OFF  : "音效(关)",
 }
