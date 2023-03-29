@@ -53,8 +53,8 @@ cc.Class({
         this.setupDashBoard(width, height);
         this.setupBoardBackground(width, height);
 
-        if (this.board !== null) {
-            this.startGame(this.board);
+        if (this.data !== null) {
+            this.startGame(this.data);
         } else {
             this.restartGame();
         }
@@ -64,10 +64,6 @@ cc.Class({
      * 设置一些初始化信息
      */
     setup() {
-        let width           = cc.winSize.width;
-        this.topSpacing     = this.getMenuButtonBoundingRect();
-        this.blockSize      = width * 0.2;
-        this.gap            = width * 0.02;
         let data            = storage.getGameData();
         this.score          = data.score;
         this.best           = data.best;
@@ -75,7 +71,15 @@ cc.Class({
         this.won            = data.won;
         this.voiceOn        = data.voice;
         this.size           = data.size;
-        this.board          = data.board;
+        this.data           = data.board;
+        this.topSpacing     = this.getMenuButtonBoundingRect();
+        this.caculateBlockFrame();
+    },
+
+    caculateBlockFrame() {
+        let width      = cc.winSize.width;
+        this.blockSize = width * 0.9 / ((this.size + 1) + this.size * 10) * 10;
+        this.gap       = this.blockSize / 10;
     },
 
     /**
@@ -175,9 +179,11 @@ cc.Class({
      * 绘制宫格
      */
     drawBoardGrid() {
+        this.grid = [];
         for (let i = 0; i < this.size; i++) {
+            this.grid[i] = [];
             for (let j = 0; j < this.size; j++) {
-                this.drawBlock(j, i, 0);
+                this.grid[i][j] = this.drawBlock(j, i, 0);
             }
         }
     },
@@ -209,11 +215,18 @@ cc.Class({
     /**
      * 新游戏
      */
-    restartGame() {
+    restartGame(modeChange) {
         this.isGameOver = false;
         this.score = 0;
         this.updateCurrentScore(this.score);
         this.clearExistBlocks();
+
+        if (modeChange === true) {
+            this.caculateBlockFrame();
+            this.clearBoardGrid();
+            this.drawBoardGrid();
+            this.updateStartBtnTitle();
+        }
 
         this.blocks = [];
         this.data = [];
@@ -228,6 +241,15 @@ cc.Class({
 
         this.addRandomBlock(false);
         this.addRandomBlock(false);
+    },
+
+    clearBoardGrid() {
+        this.grid.forEach(rows => {
+           rows.forEach(emptyBlock => {
+               emptyBlock.destroy();
+           });
+        });
+        this.grid = null;
     },
 
     /**
@@ -547,21 +569,23 @@ cc.Class({
     checkGameOver() {
         for (let y = 0; y < this.size; y++) {
             for (let x = 0; x < this.size; x++) {
-                let number = this.board[y][x];
+                let number = this.data[y][x];
                 if (number === 0) {
                     // 只要有空格，游戏就没结束
                     return false;
                 }
-                for (const direction in [constant.DIRECTION_UP, constant.DIRECTION_RIGHT, constant.DIRECTION_LEFT, constant.DIRECTION_DOWN]) {
-                    let vector = this.getVector(direction);
-                    let location = { x: x + vector.x, y: y + vector.y };
-                    if (this.locationAvailable(location)) {
-                        if (number === this.data[location.y][location.x]) {
-                            // 四个方向上只有有相同的，游戏就没有结束
-                            return  false;
+                [constant.DIRECTION_UP, constant.DIRECTION_RIGHT, constant.DIRECTION_LEFT, constant.DIRECTION_DOWN]
+                    .forEach(direction => {
+                        console.log(direction);
+                        let vector = this.getVector(direction);
+                        let location = { x: x + vector.x, y: y + vector.y };
+                        if (this.locationAvailable(location)) {
+                            if (number === this.data[location.y][location.x]) {
+                                // 四个方向上只有有相同的，游戏就没有结束
+                                return  false;
+                            }
                         }
-                    }
-                }
+                    });
             }
         }
         return true;
@@ -743,16 +767,14 @@ cc.Class({
         this.voiceOn = !this.voiceOn;
         storage.setVoice(this.voiceOn);
         // 关闭音乐
-        this.dismissPopBoardAnimation(this.overlay, content, () => {
-            this.restartGame();
-        });
+        this.dismissPopBoardAnimation(this.overlay, content);
     },
 
     onModeTapped(content) {
         this.size = this.size === 4 ? 5 : 4;
         storage.setSize(this.size);
         this.dismissPopBoardAnimation(this.overlay, content, () => {
-            this.restartGame();
+            this.restartGame(true);
         });
     },
 

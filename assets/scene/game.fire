@@ -3825,8 +3825,8 @@
         0,
         0,
         1,
-        1,
-        1,
+        0.5,
+        0.5,
         0.5
       ]
     },
@@ -5456,7 +5456,9 @@
     "gameOverRestart": {
       "__id__": 41
     },
-    "gameOverClear": null,
+    "gameOverClear": {
+      "__id__": 30
+    },
     "gameWon": {
       "__id__": 50
     },
