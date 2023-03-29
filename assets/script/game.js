@@ -41,7 +41,6 @@ cc.Class({
     onLoad () {
         this.setup();
         this.addTouchEventListener();
-        this.addOnGameBackground();
     },
 
     start () {
@@ -54,10 +53,21 @@ cc.Class({
         this.setupBoardBackground(width, height);
 
         if (this.data !== null) {
+            console.log(this.data);
             this.startGame(this.data);
         } else {
             this.restartGame();
         }
+    },
+
+    onDestroy() {
+        console.log("onDestroy");
+        console.log(this.data);
+        // storage.setScore(this.score);
+        // storage.setBestScore(this.best);
+        // storage.setBoard(this.data);
+        // storage.setIsGameOver(this.isGameOver);
+        // storage.setGameWon(this.won);
     },
 
     /**
@@ -410,19 +420,6 @@ cc.Class({
     },
 
     /**
-     * 点击右上角关闭按钮，游戏切换到后台
-     */
-    addOnGameBackground() {
-        cc.game.on(cc.game.EVENT_HIDE, () => {
-            storage.setScore(this.score);
-            storage.setBestScore(this.best);
-            storage.setBoard(this.board);
-            storage.setIsGameOver(this.isGameOver);
-            storage.setGameWon(this.won);
-        });
-    },
-
-    /**
      * 处理触摸结束
      */
     touchEnd(event) {
@@ -576,7 +573,6 @@ cc.Class({
                 }
                 [constant.DIRECTION_UP, constant.DIRECTION_RIGHT, constant.DIRECTION_LEFT, constant.DIRECTION_DOWN]
                     .forEach(direction => {
-                        console.log(direction);
                         let vector = this.getVector(direction);
                         let location = { x: x + vector.x, y: y + vector.y };
                         if (this.locationAvailable(location)) {
@@ -702,8 +698,6 @@ cc.Class({
             this.restartGame();
         } else {
             this.showMenuBoard();
-            // this.showWonBoard();
-            // this.showLoseBoard();
         }
     },
 
