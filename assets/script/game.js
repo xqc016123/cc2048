@@ -41,6 +41,20 @@ cc.Class({
     onLoad () {
         this.setup();
         this.addTouchEventListener();
+        this.addOnHide();
+    },
+
+    addOnHide() {
+        if (this.isWxPlatform()) {
+            const onHide = res => {
+                storage.setScore(this.score);
+                storage.setBestScore(this.best);
+                storage.setBoard(this.data);
+                storage.setIsGameOver(this.isGameOver);
+                storage.setGameWon(this.won);
+            };
+            wx.onHide(onHide);
+        }
     },
 
     start () {
@@ -53,21 +67,10 @@ cc.Class({
         this.setupBoardBackground(width, height);
 
         if (this.data !== null) {
-            console.log(this.data);
             this.startGame(this.data);
         } else {
             this.restartGame();
         }
-    },
-
-    onDestroy() {
-        console.log("onDestroy");
-        console.log(this.data);
-        // storage.setScore(this.score);
-        // storage.setBestScore(this.best);
-        // storage.setBoard(this.data);
-        // storage.setIsGameOver(this.isGameOver);
-        // storage.setGameWon(this.won);
     },
 
     /**
@@ -92,11 +95,15 @@ cc.Class({
         this.gap       = this.blockSize / 10;
     },
 
+    isWxPlatform() {
+        return cc.sys.platform === cc.sys.WECHAT_GAME;
+    },
+
     /**
      * 获取微信小程序顶部胶囊区域高度
      */
     getMenuButtonBoundingRect() {
-        if (cc.sys.platform == cc.sys.WECHAT_GAME) {
+        if (this.isWxPlatform()) {
             const systemInfo = wx.getSystemInfoSync();
             // 胶囊按钮位置信息
             const menuButtonInfo = wx.getMenuButtonBoundingClientRect();
@@ -136,14 +143,14 @@ cc.Class({
         bestScore.getComponent("scoreBoard").setTitle(constant.SCORE_BEST);
         bestScore.setPosition(this.dashboard.width - bestScore.width / 2, - bestScore.height / 2, 0);
         this.bestScore = bestScore;
-        this.updateBestScore(0);
+        this.updateBestScore(this.best);
 
         // 添加得分
         let currentScore = this.addScoreBoard(width);
         currentScore.getComponent("scoreBoard").setTitle(constant.SCORE_CUREENT);
         currentScore.setPosition(this.dashboard.width - currentScore.width * 1.5 - 12, - bestScore.height / 2, 0);
         this.curScore = currentScore;
-        this.updateCurrentScore(0, false);
+        this.updateCurrentScore(this.score, false);
     },
 
     updateBestScore(score) {
@@ -506,9 +513,11 @@ cc.Class({
     mergeBlocks(block, location, farthest, next, vector) {
         this.data[next.y][next.x]           *= 2;
         this.score                          += Math.log2(this.data[next.y][next.x]);
-        this.best                            = Math.max(this.score, this.best);
         this.data[location.y][location.x]    = 0;
         this.blocks[location.y][location.x]  = null;
+        if (this.best < this.score) {
+            this.best = this.score;
+        }
         this.mergedBlockLocations.push(`${next.x}-${next.y}`);
 
         if (this.won === false) {

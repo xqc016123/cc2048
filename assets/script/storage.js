@@ -14,7 +14,7 @@ const setBestScore = function (score) {
 
 const setIsGameOver = function (isGameOver) {
     try {
-        wx.setStorageSync(constant.STORAGE_BEST_KEY, isGameOver);
+        wx.setStorageSync(constant.STORAGE_OVER_KEY, isGameOver);
     } catch (e) { }
 }
 
