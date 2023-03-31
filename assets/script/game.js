@@ -778,6 +778,7 @@ cc.Class({
 
     onVoiceTapped(content) {
         this.voiceOn = !this.voiceOn;
+        console.log(this.voiceOn);
         storage.setVoice(this.voiceOn);
         // 关闭音乐
         this.dismissPopBoardAnimation(this.overlay, content);
