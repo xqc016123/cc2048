@@ -490,7 +490,7 @@ cc.Class({
             });
         });
 
-        if (moved) {
+        if (moved && this.voiceOn) {
             Audio.control("move");
         }
 
@@ -712,7 +712,6 @@ cc.Class({
      * 开始游戏按钮点击事件
      */
     onStartClick() {
-        console.log(this.isGameOver);
         if (this.isGameOver) {
             this.restartGame();
         } else {
@@ -778,7 +777,7 @@ cc.Class({
 
     onVoiceTapped(content) {
         this.voiceOn = !this.voiceOn;
-        console.log(this.voiceOn);
+        console.log(`voiceOn = ${this.voiceOn}`);
         storage.setVoice(this.voiceOn);
         // 关闭音乐
         this.dismissPopBoardAnimation(this.overlay, content);
@@ -797,18 +796,6 @@ cc.Class({
      */
     clearRandomBlock() {
 
-    },
-
-    /**
-     * 播放音乐
-     */
-    playAudio(src) {
-        if (!this.voiceOn) {
-            return;
-        }
-        cc.loader.load(cc.url.raw(src), function(err, clip){
-            cc.audioEngine.play(clip, false, 1);
-        });
     },
 
     // update (dt) {},
