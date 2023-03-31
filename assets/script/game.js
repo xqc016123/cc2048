@@ -2,6 +2,7 @@ import colors from  './colors';
 import constant from './constant';
 import storage from './storage';
 import Audio from "./audio";
+import request from './request';
 
 cc.Class({
     extends: cc.Component,
@@ -44,6 +45,7 @@ cc.Class({
         this.addTouchEventListener();
         this.addOnHide();
         Audio.preload();
+        request.reportUser();
     },
 
     addOnHide() {
@@ -807,7 +809,6 @@ cc.Class({
             cc.audioEngine.play(clip, false, 1);
         });
     },
-
 
     // update (dt) {},
 });
