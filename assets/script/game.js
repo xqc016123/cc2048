@@ -1,6 +1,7 @@
 import colors from  './colors';
 import constant from './constant';
 import storage from './storage';
+import Audio from "./audio";
 
 cc.Class({
     extends: cc.Component,
@@ -42,6 +43,7 @@ cc.Class({
         this.setup();
         this.addTouchEventListener();
         this.addOnHide();
+        Audio.preload();
     },
 
     addOnHide() {
@@ -486,6 +488,10 @@ cc.Class({
             });
         });
 
+        if (moved) {
+            Audio.control("move");
+        }
+
         this.scheduleOnce(() => {
             this.moving = false;
             if (moved) {
@@ -562,9 +568,11 @@ cc.Class({
         this.addRandomBlock(true);
         this.isGameOver = this.checkGameOver();
         if (this.isGameOver) {
+            Audio.control("fail");
             this.updateStartBtnTitle();
             this.showLoseBoard();
         } else if (this.won) {
+            Audio.control("won");
             this.showWonBoard();
         }
     },
@@ -787,6 +795,19 @@ cc.Class({
     clearRandomBlock() {
 
     },
+
+    /**
+     * 播放音乐
+     */
+    playAudio(src) {
+        if (!this.voiceOn) {
+            return;
+        }
+        cc.loader.load(cc.url.raw(src), function(err, clip){
+            cc.audioEngine.play(clip, false, 1);
+        });
+    },
+
 
     // update (dt) {},
 });
